@@ -18,6 +18,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/tendermint/go-amino v0.14.1
 	github.com/tendermint/tendermint v0.31.11
+	github.com/tendermint/tm-db v0.3.0
 	golang.org/x/sys v0.0.0-20190911201528-7ad0cfa0b7b5 // indirect
 )
 
