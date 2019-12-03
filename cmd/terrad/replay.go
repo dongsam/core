@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -91,7 +90,7 @@ func replayTxs(rootDir string) error {
 	// Application
 	fmt.Fprintln(os.Stderr, "Creating application")
 	myapp := app.NewTerraApp(
-		ctx.Logger, appDB, traceStoreWriter, true, uint(1),
+		ctx.Logger, appDB, nil, true, uint(1),
 		baseapp.SetPruning(store.PruneEverything), // nothing
 	)
 

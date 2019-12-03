@@ -75,6 +75,7 @@ ifeq ($(OS),Windows_NT)
 else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/terrad ./cmd/terrad
 	go build -mod=readonly $(BUILD_FLAGS) -o build/terracli ./cmd/terracli
+	go build -mod=readonly $(BUILD_FLAGS) -o build/terratxextract ./cmd/terratxextract
 endif
 
 build-linux: go.sum
@@ -90,6 +91,7 @@ endif
 install: go.sum 
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terrad
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terracli
+	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terratxextract
 
 install-debug: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/terradebug
