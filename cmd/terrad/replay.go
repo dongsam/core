@@ -38,18 +38,18 @@ func replayCmd() *cobra.Command {
 
 func replayTxs(rootDir string) error {
 
-	if false {
+	//if false {
 		// Copy the rootDir to a new directory, to preserve the old one.
-		fmt.Fprintln(os.Stderr, "Copying rootdir over")
-		oldRootDir := rootDir
-		rootDir = oldRootDir + "_replay"
-		if cmn.FileExists(rootDir) {
-			cmn.Exit(fmt.Sprintf("temporary copy dir %v already exists", rootDir))
-		}
-		if err := cpm.Copy(oldRootDir, rootDir); err != nil {
-			return err
-		}
+	fmt.Fprintln(os.Stderr, "Copying rootdir over")
+	oldRootDir := rootDir
+	rootDir = oldRootDir + "_replay"
+	if cmn.FileExists(rootDir) {
+		cmn.Exit(fmt.Sprintf("temporary copy dir %v already exists", rootDir))
 	}
+	if err := cpm.Copy(oldRootDir, rootDir); err != nil {
+		return err
+	}
+	//}
 
 	configDir := filepath.Join(rootDir, "config")
 	dataDir := filepath.Join(rootDir, "data")
@@ -77,16 +77,16 @@ func replayTxs(rootDir string) error {
 	}
 
 	// TraceStore
-	var traceStoreWriter io.Writer
-	var traceStoreDir = filepath.Join(dataDir, "trace.log")
-	traceStoreWriter, err = os.OpenFile(
-		traceStoreDir,
-		os.O_WRONLY|os.O_APPEND|os.O_CREATE,
-		0666,
-	)
-	if err != nil {
-		return err
-	}
+	//var traceStoreWriter io.Writer
+	//var traceStoreDir = filepath.Join(dataDir, "trace.log")
+	//traceStoreWriter, err = os.OpenFile(
+	//	traceStoreDir,
+	//	os.O_WRONLY|os.O_APPEND|os.O_CREATE,
+	//	0666,
+	//)
+	//if err != nil {
+	//	return err
+	//}
 
 	// Application
 	fmt.Fprintln(os.Stderr, "Creating application")
