@@ -81,7 +81,6 @@ func run() {
 	fmt.Println(store.Stats())
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-
 		if !isTagKey(iter.Key()){
 			rawBytes := iter.Value()
 			if rawBytes == nil {
@@ -129,9 +128,9 @@ func run() {
 					errCnt++
 				}
 			}
-		}
-		if cnt % 100 == 1 || errCnt % 100 == 1 {
-			fmt.Println("success_cnt", cnt, "err_cnt", errCnt)
+			if cnt % 1000 == 1 {
+				fmt.Println("success_cnt", cnt, "err_cnt", errCnt)
+			}
 		}
 	}
 }
