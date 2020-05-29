@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	costypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tm-db"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
+	"github.com/tendermint/tm-db"
 	"github.com/terra-project/core/app"
 	"log"
 	"os"
@@ -53,6 +54,15 @@ func run() {
 	}
 	fmt.Println("target_dir:", dir, "target_tx_index", file)
 
+	var txPrefix []byte
+	var txPostfix []byte = nil
+	if len(os.Args) > 2 {
+		txPrefix, _ = hex.DecodeString(os.Args[2])
+	}
+	if len(os.Args) > 3 {
+		txPostfix, _ = hex.DecodeString(os.Args[3])
+	}
+
 	// event bus
 	eventBus := types.NewEventBus()
 	err := eventBus.Start()
@@ -77,7 +87,13 @@ func run() {
 	}
 	defer store.Close()
 
+
 	iter := store.Iterator(int642Bytes(0), nil)
+	if txPrefix != nil {
+		iter = store.Iterator(txPrefix, txPostfix)
+		fmt.Println("tx prefix, postfix", txPrefix, txPostfix)
+	}
+
 	fmt.Println(store.Stats())
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -129,7 +145,7 @@ func run() {
 				}
 			}
 			if cnt % 1000 == 1 {
-				fmt.Println("success_cnt", cnt, "err_cnt", errCnt)
+				fmt.Println("success_cnt", cnt, "err_cnt", errCnt, iter.Key())
 			}
 		}
 	}
