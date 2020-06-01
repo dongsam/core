@@ -10,6 +10,11 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.E
 	votes = map[string]types.ExchangeRateBallot{}
 	aggregateVoterMap := map[string]bool{}
 
+	//params := k.GetParams(ctx)
+	//
+	//// TODO: make map [vali][denom1][denom2]
+	//crossRateMapByVali := map[string]map[string]map[string]sdk.Dec{}
+
 	// Organize aggregate votes
 	aggregateHandler := func(vote types.AggregateExchangeRateVote) (stop bool) {
 		validator := k.StakingKeeper.Validator(ctx, vote.Voter)
@@ -26,6 +31,9 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.E
 					tmpPower = 0
 				}
 
+				//// TODO: WIP
+				//// TODO: map exists check, iterate already mapped denom
+				//crossRateMapByVali[valoper][tuple.Denom] = ""
 				votes[tuple.Denom] = append(votes[tuple.Denom],
 					types.NewVoteForTally(
 						types.NewExchangeRateVote(tuple.ExchangeRate, tuple.Denom, vote.Voter),
@@ -69,5 +77,28 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.E
 	}
 	k.IterateExchangeRateVotes(ctx, handler)
 
+	//for valoper, denom1List := range crossRateMapByVali {
+	//	for denom1, _ := range denom1List {
+	//		delete(denom1List, denom1)
+	//		for denom2, _ := range denom1List {
+	//			tmp1, tmp2 := types.GetDenomOrderAsc(denom1, denom2)
+	//			crossRateMapByVali[valoper][tmp1][tmp2] = tmp2
+	//		}
+	//		//for _, d := range params.Whitelist {
+	//		//	d
+	//		//}
+	//	}
+	//}
+	//
+	//// TODO: iterate votes, add crossRates
+	//
+	////if _, ok := crossRateMapByVali[valoper][tuple.Denom]; ok {
+	////
+	////} else {
+	////	crossRateMapByVali[valoper][tuple.Denom] = ""
+	////}
+	////for _, d := range params.Whitelist {
+	////	d
+	////}
 	return
 }

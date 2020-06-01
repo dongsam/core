@@ -48,6 +48,12 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return false
 	})
 
+	// TODO: Clear all cross exchange rates
+	//k.IterateCrossExchangeRates(ctx, func(denom1 string, denom2 string, _ sdk.Dec) (stop bool) {
+	//	k.DeleteCrossExchangeRate(ctx, denom1, denom2)
+	//	return false
+	//})
+
 	// Organize votes to ballot by denom
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
@@ -97,6 +103,10 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 			),
 		)
 	}
+
+	crossExchangeRates := tallyCrossRate(ctx, voteMap, voteTargets)
+	// TODO: add logic for get crossRate
+
 
 	//---------------------------
 	// Do miss counting & slashing

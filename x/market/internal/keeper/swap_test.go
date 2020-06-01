@@ -83,6 +83,8 @@ func TestComputeInternalSwap(t *testing.T) {
 	require.Error(t, err)
 }
 
+// TODO: need to add, fix testcode for new ComputeInternalSwap
+
 func TestIlliquidTobinTaxListParams(t *testing.T) {
 	input := CreateTestInput(t)
 

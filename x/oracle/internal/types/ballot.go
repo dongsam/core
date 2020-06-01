@@ -23,6 +23,35 @@ func NewVoteForTally(vote ExchangeRateVote, power int64) VoteForTally {
 	}
 }
 
+type CrossExchangeRates []CrossExchangeRate
+
+type CrossExchangeRate struct {
+	Denom1        string         `json:"denom"`         // Ticker name of target first terra currency
+	Denom2        string         `json:"denom"`         // Ticker name of target second terra currency
+	ExchangeRate sdk.Dec        `json:"exchange_rate"` // ExchangeRate of Luna in target fiat currency
+}
+
+func GetDenomOrderAsc(denom1 string, denom2 string) (string, string) {
+	if denom1 > denom2 {
+		return denom2, denom1
+	}
+	return denom1, denom2
+}
+
+func NewCrossExchangeRate(denom1 string, denom2 string, exchangeRate sdk.Dec) CrossExchangeRate {
+	// swap ascending order for deterministic kv indexing
+	denom1, denom2 = GetDenomOrderAsc(denom1, denom2)
+	//if denom1 > denom2 {
+	//	denom1, denom2 = denom2, denom1
+	//}
+	return CrossExchangeRate{
+		denom1,
+		denom2,
+		exchangeRate,
+	}
+}
+// Todo ordering CrossExchangeRates on get
+
 // ExchangeRateBallot is a convinience wrapper around a ExchangeRateVote slice
 type ExchangeRateBallot []VoteForTally
 
@@ -37,7 +66,7 @@ func (pb ExchangeRateBallot) Power() int64 {
 }
 
 // WeightedMedian returns the median weighted by the power of the ExchangeRateVote.
-func (pb ExchangeRateBallot) WeightedMedian() sdk.Dec {
+func (pb ExchangeRateBallot) WeightedMedian() sdk.Dec {  // TODO: make this for crossrate
 	totalPower := pb.Power()
 	if pb.Len() > 0 {
 		if !sort.IsSorted(pb) {
