@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	core "github.com/terra-project/core/types"
@@ -47,7 +48,7 @@ func (k Keeper) ApplySwapToPool(ctx sdk.Context, offerCoin sdk.Coin, askCoin sdk
 // exchange rate registered with the oracle.
 // Returns an Error if the swap is recursive, or the coins to be traded are unknown by the oracle, or the amount
 // to trade is too small.
-func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (retDecCoin sdk.DecCoin, spread sdk.Dec, err sdk.Error) {
+func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string) (retDecCoin sdk.DecCoin, spread sdk.Dec, err sdk.Error) {  // TODO: fix
 
 	// Return invalid recursive swap err
 	if offerCoin.Denom == askDenom {
@@ -132,22 +133,39 @@ func (k Keeper) ComputeSwap(ctx sdk.Context, offerCoin sdk.Coin, askDenom string
 // ComputeInternalSwap returns the amount of asked DecCoin should be returned for a given offerCoin at the effective
 // exchange rate registered with the oracle.
 // Different from ComputeSwap, ComputeInternalSwap does not charge a spread as its use is system internal.
-func (k Keeper) ComputeInternalSwap(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) {
+func (k Keeper) ComputeInternalSwap(ctx sdk.Context, offerCoin sdk.DecCoin, askDenom string) (sdk.DecCoin, sdk.Error) { // TODO: fix
 	if offerCoin.Denom == askDenom {
 		return offerCoin, nil
 	}
+	var retAmount sdk.Dec
+	// if Terra->Terra swap, get WeightedMedian from oracles
+	if offerCoin.Denom != core.MicroLunaDenom && askDenom != core.MicroLunaDenom {
+		// TODO: k.oracleKeeper.GetCrossExchangeRate(ctx, offerCoin.Denom, asdkDenom)
+		crossExchangeRate, err := k.oracleKeeper.GetCrossExchangeRateExported(ctx, offerCoin.Denom, askDenom)
+		if err != nil {
+			return sdk.DecCoin{}, err // TODO: parents err or ErrNoEffectivePrice
+		}
+		fmt.Println(offerCoin, askDenom, crossExchangeRate)
+		// TODO, ordering and mul with order
+		if offerCoin.Denom > askDenom { // TODO: need to check
+			retAmount = offerCoin.Amount.Mul(crossExchangeRate)
+		} else {
+			retAmount = offerCoin.Amount.Quo(crossExchangeRate)
+		}
+	} else {
+		offerRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, offerCoin.Denom)
+		if err != nil {
+			return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, offerCoin.Denom)
+		}
 
-	offerRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, offerCoin.Denom)
-	if err != nil {
-		return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, offerCoin.Denom)
+		askRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, askDenom)
+		if err != nil {
+			return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, askDenom)
+		}
+
+		retAmount = offerCoin.Amount.Mul(askRate).Quo(offerRate)
 	}
 
-	askRate, err := k.oracleKeeper.GetLunaExchangeRate(ctx, askDenom)
-	if err != nil {
-		return sdk.DecCoin{}, types.ErrNoEffectivePrice(types.DefaultCodespace, askDenom)
-	}
-
-	retAmount := offerCoin.Amount.Mul(askRate).Quo(offerRate)
 	if retAmount.LTE(sdk.ZeroDec()) {
 		return sdk.DecCoin{}, types.ErrInvalidOfferCoin(types.DefaultCodespace, offerCoin.Amount.TruncateInt())
 	}

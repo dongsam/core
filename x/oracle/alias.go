@@ -101,6 +101,8 @@ var (
 	NewAggregateExchangeRatePrevote    = types.NewAggregateExchangeRatePrevote
 	ParseExchangeRateTuples            = types.ParseExchangeRateTuples
 	NewAggregateExchangeRateVote       = types.NewAggregateExchangeRateVote
+	Tally                              = types.Tally
+	TallyCrossRate                     = types.TallyCrossRate
 	NewKeeper                          = keeper.NewKeeper
 	ParamKeyTable                      = keeper.ParamKeyTable
 	NewQuerier                         = keeper.NewQuerier

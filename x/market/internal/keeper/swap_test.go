@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -82,6 +83,31 @@ func TestComputeInternalSwap(t *testing.T) {
 	_, err := input.MarketKeeper.ComputeInternalSwap(input.Ctx, offerCoin, core.MicroLunaDenom)
 	require.Error(t, err)
 }
+
+// TODO: need to add, fix testcode for new ComputeInternalSwap
+func TestComputeInternalSwapTerraTerraCase(t *testing.T) {
+	input := CreateTestInput(t)
+
+	// Set Oracle Price
+	//lunaPriceInSDR := sdk.NewDecWithPrec(17, 1)
+	lunaPriceInUSD := sdk.NewDecWithPrec(135, 1)
+	lunaPriceInKRW := sdk.NewDecWithPrec(229000, 1)
+	//input.OracleKeeper.SetLunaExchangeRate(input.Ctx, core.MicroSDRDenom, lunaPriceInSDR)
+	input.OracleKeeper.SetCrossExchangeRateExported(input.Ctx, core.MicroKRWDenom, core.MicroUSDDenom, lunaPriceInKRW.Quo(lunaPriceInUSD))
+
+	//for i := 0; i < 100; i++ {
+	//	offerCoin := sdk.NewDecCoin(core.MicroUSDDenom, lunaPriceInUSD.MulInt64(rand.Int63()+1).TruncateInt())
+	//	retCoin, err := input.MarketKeeper.ComputeInternalSwap(input.Ctx, offerCoin, core.MicroKRWDenom)
+	//	require.NoError(t, err)
+	//	require.Equal(t, offerCoin.Amount.Quo(lunaPriceInUSD), retCoin.Amount)
+	//}
+
+	offerCoin := sdk.NewDecCoin(core.MicroUSDDenom, sdk.NewInt(1))
+	res, err := input.MarketKeeper.ComputeInternalSwap(input.Ctx, offerCoin, core.MicroKRWDenom)
+	fmt.Println(res)
+	require.NoError(t, err)
+}
+
 
 func TestIlliquidTobinTaxListParams(t *testing.T) {
 	input := CreateTestInput(t)

@@ -95,6 +95,8 @@ func TestOracleThreshold(t *testing.T) {
 	require.NotNil(t, err)
 }
 
+// TODO: add tests for cross change rate, TallyCrossRate, GetCrossExchangeRate, Delete, Event, etc
+
 func TestOracleMultiVote(t *testing.T) {
 	input, h := setup(t)
 
@@ -231,7 +233,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	tallyMedian, ballotWinner := tally(input.Ctx, ballot, input.OracleKeeper.RewardBand(input.Ctx))
+	tallyMedian, ballotWinner := types.Tally(ballot, input.OracleKeeper.RewardBand(input.Ctx))
 
 	require.Equal(t, len(rewardees), len(ballotWinner))
 	require.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())

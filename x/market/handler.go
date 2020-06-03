@@ -24,7 +24,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // handleMsgSwap handles the logic of a MsgSwap
-func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result {
+func handleMsgSwap(ctx sdk.Context, k Keeper, ms MsgSwap) sdk.Result { // TODO: fix
 
 	// Can't swap to the same coin
 	if ms.OfferCoin.Denom == ms.AskDenom {

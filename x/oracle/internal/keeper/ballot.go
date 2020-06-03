@@ -71,3 +71,12 @@ func (k Keeper) OrganizeBallotByDenom(ctx sdk.Context) (votes map[string]types.E
 
 	return
 }
+
+// ballot for the asset is passing the threshold amount of voting power
+func (k Keeper) BallotIsPassing(ctx sdk.Context, ballot types.ExchangeRateBallot) bool {
+	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx))
+	voteThreshold := k.VoteThreshold(ctx)
+	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
+	ballotPower := sdk.NewInt(ballot.Power())
+	return ballotPower.GTE(thresholdVotes)
+}
