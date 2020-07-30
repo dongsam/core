@@ -60,6 +60,8 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 	voteMap := k.OrganizeBallotByDenom(ctx)
 
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
+	maximum_ballot_len := 0
+	var referenceTerra string
 	for denom, ballot := range voteMap {
 
 		// If denom is not in the voteTargets, or the ballot for it has failed, then skip
@@ -102,9 +104,14 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 				sdk.NewAttribute(types.AttributeKeyExchangeRate, ballotMedian.String()),
 			),
 		)
+		// TODO: get a Reference_Terra ( KRW , SRD, etc ) via counting vote each W
+		len_ballot := len(ballot)
+		if maximum_ballot_len > len_ballot {
+			referenceTerra = denom
+			maximum_ballot_len = len_ballot
+		}
 	}
-
-	crossExchangeRates := k.TallyCrossRate(ctx, voteMap, voteTargets)
+	crossExchangeRates := k.TallyCrossRate(ctx, voteMap, voteTargets, referenceTerra)
 	for _, cer := range crossExchangeRates {
 		k.SetCrossExchangeRate(ctx, cer)
 		// Emit event for cross exchange rate

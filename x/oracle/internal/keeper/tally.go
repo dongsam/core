@@ -48,18 +48,23 @@ func (k Keeper) Tally(pb types.ExchangeRateBallot, rewardBand sdk.Dec) (weighted
 }
 
 // Calculates the median for cross exchange rate and returns it.
-func (k Keeper) TallyCrossRate(ctx sdk.Context, voteMap map[string]types.ExchangeRateBallot, voteTargets map[string]sdk.Dec) (crossExchangeRates types.CrossExchangeRates) {
+func (k Keeper) TallyCrossRate(ctx sdk.Context, voteMap map[string]types.ExchangeRateBallot, voteTargets map[string]sdk.Dec, referenceTerra string) (crossExchangeRates types.CrossExchangeRates) {
 	crossRateMapByVali := make(map[string]map[string]sdk.Dec)
 	crossRateMapByDenom := make(map[string]map[string]types.ExchangeRateBallot)
 
 	// Organize by denom pair for cross rate
 	for denom, ballot := range voteMap {
+		// TODO: iterate for only referenceTerra
+		//if denom != referenceTerra {
+		//	continue
+		//}
 		if _, exists := voteTargets[denom]; !exists {
 			continue
 		}
 		for _, vote := range ballot {
 			if vote.ExchangeRate.IsPositive() {
 				for k, v := range crossRateMapByVali[vote.Voter.String()]{
+					// TODO: Fix to Pair with voteTargets, Reference_Terra
 					var crossRate sdk.Dec
 					denom1, denom2 := types.GetDenomOrderAsc(denom, k)
 					if denom > k {
@@ -79,6 +84,7 @@ func (k Keeper) TallyCrossRate(ctx sdk.Context, voteMap map[string]types.Exchang
 						)
 					}
 				}
+				// TODO: Fix to Pair with voteTargets, Reference_Terra
 				if _, ok := crossRateMapByVali[vote.Voter.String()]; !ok {
 					crossRateMapByVali[vote.Voter.String()] = make(map[string]sdk.Dec)
 				}
@@ -88,6 +94,7 @@ func (k Keeper) TallyCrossRate(ctx sdk.Context, voteMap map[string]types.Exchang
 	}
 
 	// Get Weighted Median for each denom pair
+	// TODO: Fix to Pair with voteTargets, Reference_Terra
 	for denom1, denom2List := range crossRateMapByDenom {
 		for denom2, erb := range denom2List {
 			// Check quorum threshold, Get Weighted Median
