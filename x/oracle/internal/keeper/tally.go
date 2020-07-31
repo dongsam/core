@@ -17,12 +17,45 @@ func (k Keeper) BallotIsPassing(ctx sdk.Context, ballot types.ExchangeRateBallot
 
 // Calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
-func (k Keeper) Tally(pb types.ExchangeRateBallot, rewardBand sdk.Dec) (weightedMedian sdk.Dec, ballotWinners []types.Claim) {
+func (k Keeper) Tally(pb types.ExchangeRateBallot) (weightedMedian sdk.Dec) {
 	if !sort.IsSorted(pb) {
 		sort.Sort(pb)
 	}
 
 	weightedMedian = pb.WeightedMedian()
+	//
+	//standardDeviation := pb.StandardDeviation()
+	//rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
+	//
+	//if standardDeviation.GT(rewardSpread) {
+	//	rewardSpread = standardDeviation
+	//}
+	//
+	//for _, vote := range pb {
+	//	// Filter ballot winners & abstain voters
+	//	if (vote.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
+	//		vote.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))) ||
+	//		!vote.ExchangeRate.IsPositive() {
+	//
+	//		// Abstain votes have zero vote power
+	//		ballotWinners = append(ballotWinners, types.Claim{
+	//			Recipient: vote.Voter,
+	//			Weight:    vote.Power,
+	//		})
+	//	}
+	//
+	//}
+	return
+}
+
+
+// Calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
+// a reasonable spread from the weighted median to the store
+func (k Keeper) GetBallotWinners(pb types.ExchangeRateBallot, rewardBand sdk.Dec, weightedMedian sdk.Dec) (ballotWinners []types.Claim) {
+	if !sort.IsSorted(pb) {
+		sort.Sort(pb)
+	}
+
 	standardDeviation := pb.StandardDeviation()
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
 
@@ -55,18 +88,21 @@ func (k Keeper) TallyCrossRate(ctx sdk.Context, voteMap map[string]types.Exchang
 	// Organize by denom pair for cross rate
 	for denom, ballot := range voteMap {
 		// TODO: iterate for only referenceTerra
-		//if denom != referenceTerra {
-		//	continue
-		//}
+		if denom == referenceTerra {
+			continue
+		}
 		if _, exists := voteTargets[denom]; !exists {
 			continue
 		}
 		for _, vote := range ballot {
 			if vote.ExchangeRate.IsPositive() {
 				for k, v := range crossRateMapByVali[vote.Voter.String()]{
-					// TODO: Fix to Pair with voteTargets, Reference_Terra
 					var crossRate sdk.Dec
 					denom1, denom2 := types.GetDenomOrderAsc(denom, k)
+					// TODO: iterate for only referenceTerra
+					if denom1 != referenceTerra && denom2 != referenceTerra{
+						continue
+					}
 					if denom > k {
 						crossRate = v.Quo(vote.ExchangeRate)
 					} else {

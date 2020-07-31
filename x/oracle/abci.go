@@ -48,80 +48,75 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		return false
 	})
 
-	// Clear all cross exchange rates
-	k.IterateCrossExchangeRates(ctx, func(cer types.CrossExchangeRate) (stop bool) {
-		k.DeleteCrossExchangeRate(ctx, cer)
-		return false
-	})
-
 	// Organize votes to ballot by denom
 	// NOTE: **Filter out inactive or jailed validators**
 	// NOTE: **Make abstain votes to have zero vote power**
 	voteMap := k.OrganizeBallotByDenom(ctx)
 
 	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
-	maximum_ballot_len := 0
+	LargestBallotPower := int64(0)
 	var referenceTerra string
+	// TODO: check ballot len or power?
 	for denom, ballot := range voteMap {
-
-		// If denom is not in the voteTargets, or the ballot for it has failed, then skip
 		if _, exists := voteTargets[denom]; !exists {
 			continue
 		}
+		ballotPower := ballot.Power()
 
-		// If the ballot is not passed, remove it from the voteTargets array
-		// to prevent slashing validators who did valid vote.
 		if !k.BallotIsPassing(ctx, ballot) {
 			delete(voteTargets, denom)
 			continue
 		}
 
-		// Get weighted median exchange rates, and faithful respondants
-		ballotMedian, ballotWinningClaims := k.Tally(ballot, params.RewardBand)
-
-		// Set the exchange rate
-		k.SetLunaExchangeRate(ctx, denom, ballotMedian)
-
-		// Collect claims of ballot winners
-		for _, ballotWinningClaim := range ballotWinningClaims {
-
-			// NOTE: we directly stringify byte to string to prevent unnecessary bech32fy works
-			key := string(ballotWinningClaim.Recipient)
-
-			// Update claim
-			prevClaim := winnerMap[key]
-			prevClaim.Weight += ballotWinningClaim.Weight
-			winnerMap[key] = prevClaim
-
-			// Increase valid votes counter
-			validVotesCounterMap[key]++
-		}
-
-		// Emit abci events
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
-				sdk.NewAttribute(types.AttributeKeyDenom, denom),
-				sdk.NewAttribute(types.AttributeKeyExchangeRate, ballotMedian.String()),
-			),
-		)
-		// TODO: get a Reference_Terra ( KRW , SRD, etc ) via counting vote each W
-		len_ballot := len(ballot)
-		if maximum_ballot_len > len_ballot {
+		if LargestBallotPower > ballotPower {
 			referenceTerra = denom
-			maximum_ballot_len = len_ballot
+			LargestBallotPower = ballotPower
+		} else if LargestBallotPower == ballotPower {
+			// TODO: check alphabetical order
+			if referenceTerra > denom {
+				referenceTerra = denom
+			}
 		}
 	}
+
+	ballot, _ := voteMap[referenceTerra]
+	ballotMedian := k.Tally(ballot)
+	k.SetLunaExchangeRate(ctx, referenceTerra, ballotMedian)
+
+	// TODO: ballot winning claims for not reference terra after fixed
+	// Collect claims of ballot winners
+	ballotWinningClaims := k.GetBallotWinners(ballot, params.RewardBand, ballotMedian)
+	for _, ballotWinningClaim := range ballotWinningClaims {
+
+		// NOTE: we directly stringify byte to string to prevent unnecessary bech32fy works
+		key := string(ballotWinningClaim.Recipient)
+
+		// Update claim
+		prevClaim := winnerMap[key]
+		prevClaim.Weight += ballotWinningClaim.Weight
+		winnerMap[key] = prevClaim
+
+		// Increase valid votes counter
+		validVotesCounterMap[key]++
+	}
+
+	// Emit abci events
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(types.EventTypeExchangeRateUpdate,
+			sdk.NewAttribute(types.AttributeKeyDenom, referenceTerra),
+			sdk.NewAttribute(types.AttributeKeyExchangeRate, ballotMedian.String()),
+		),
+	)
+
 	crossExchangeRates := k.TallyCrossRate(ctx, voteMap, voteTargets, referenceTerra)
 	for _, cer := range crossExchangeRates {
-		k.SetCrossExchangeRate(ctx, cer)
-		// Emit event for cross exchange rate
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(types.EventTypeCrossExchangeRateUpdate,
-				sdk.NewAttribute(types.AttributeKeyDenom1, cer.Denom1),
-				sdk.NewAttribute(types.AttributeKeyDenom2, cer.Denom2),
-				sdk.NewAttribute(types.AttributeKeyCrossExchangeRate, cer.CrossExchangeRate.String()),
-			),
-		)
+		if cer.Denom1 == referenceTerra {
+
+		} else if cer.Denom2 == referenceTerra {
+
+		} else {
+			// TODO: panic
+		}
 	}
 	//---------------------------
 	// Do miss counting & slashing

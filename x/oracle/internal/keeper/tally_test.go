@@ -102,7 +102,8 @@ func TestTallyCrossRate(t *testing.T) {
 		return false
 	})
 
-	crossRates := input.OracleKeeper.TallyCrossRate(input.Ctx, ballotMap, voteTargets)
+	referrenceTerra := core.MicroKRWDenom
+	crossRates := input.OracleKeeper.TallyCrossRate(input.Ctx, ballotMap, voteTargets, referrenceTerra)
 	require.Equal(t, 4, len(crossRates))
 	for _, cer := range crossRates {
 		input.OracleKeeper.SetCrossExchangeRate(ctx, cer)
